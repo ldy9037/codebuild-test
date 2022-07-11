@@ -1,0 +1,17 @@
+version: 0.2
+
+phases:
+  install:
+    on-failure: ABORT
+    commanfs:
+      - ash -c "$(curl -fsSL https://raw.githubusercontent.com/thii/aws-codebuild-extras/master/install)"
+  pre_build:
+    commands:
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+  build:
+    commands:
+      - docker build -t $IMAGE_REPO_NAME:$CODEBUILD_GIT_BRANCH-$IMAGE_TAG .
+      - docker tag $IMAGE_REPO_NAME:$CODEBUILD_GIT_BRANCH-$IMAGE_TAG $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$CODEBUILD_GIT_BRANCH-$IMAGE_TAG      
+  post_build:
+    commands:
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$CODEBUILD_GIT_BRANCH-$IMAGE_TAG
